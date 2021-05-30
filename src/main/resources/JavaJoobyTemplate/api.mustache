@@ -7,11 +7,11 @@ import {{import}};
 import io.jooby.*;
 import org.jetbrains.annotations.NotNull;
 
-
 {{#operations}}
-public class {{classname}} {
-
-    {{#operation}}
+public class {{classname}} { {{#operation}}{{#summary}}
+    /**
+    * {{.}}
+    **/{{/summary}}
     @NotNull
     public {{returnType}} {{operationId}}(Context ctx) {
         ctx.setResponseCode(StatusCode.NOT_IMPLEMENTED);
