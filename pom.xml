@@ -25,7 +25,6 @@
             <artifactId>swagger-codegen-cli</artifactId>
             <version>3.0.20</version>
         </dependency>
-
     </dependencies>
 
     <build>
