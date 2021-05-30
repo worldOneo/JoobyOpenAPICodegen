@@ -12,8 +12,7 @@ public class {{classname}} { {{#operation}}
     /**{{#summary}}
     * {{.}}{{/summary}}
     * {{#allParams}}
-    * Param {{baseName}} ({{dataType}}):  {{description}}
-    * {{/allParams}}
+    * Param {{baseName}} ({{dataType}}){{#description}}:  {{{.}}}{{/description}}{{/allParams}}
     **/
     @NotNull
     public {{returnType}} {{operationId}}(Context ctx) {
