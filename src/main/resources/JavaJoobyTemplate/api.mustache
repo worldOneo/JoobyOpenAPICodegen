@@ -8,12 +8,18 @@ import io.jooby.*;
 import org.jetbrains.annotations.NotNull;
 
 {{#operations}}
-public class {{classname}} { {{#operation}}{{#summary}}
-    /**
-    * {{.}}
-    **/{{/summary}}
+public class {{classname}} { {{#operation}}
+    /**{{#summary}}
+    * {{.}}{{/summary}}
+    * {{#allParams}}
+    * Param {{baseName}} ({{dataType}}):  {{description}}
+    * {{/allParams}}
+    **/
     @NotNull
     public {{returnType}} {{operationId}}(Context ctx) {
+    {{#allParams}}
+        {{dataType}} {{baseName}} = ctx.{{{vendorExtensions.x-param-ResolveMethod}}};
+    {{/allParams}}
         ctx.setResponseCode(StatusCode.NOT_IMPLEMENTED);
         return new {{defaultResponse}}();
     }

@@ -2,6 +2,7 @@ package de.worldoneo.joobycodegen;
 
 import io.swagger.codegen.v3.CodegenModel;
 import io.swagger.codegen.v3.CodegenOperation;
+import io.swagger.codegen.v3.CodegenParameter;
 import io.swagger.codegen.v3.CodegenProperty;
 import io.swagger.codegen.v3.CodegenType;
 import io.swagger.codegen.v3.SupportingFile;
@@ -16,6 +17,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -51,6 +53,13 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
 
         this.setDateLibrary("java8");
 
+    }
+
+    private static String firstLetterLower(String camel) {
+        byte[] name = camel.getBytes(StandardCharsets.UTF_8);
+        if (name[0] > 64 && name[0] < 91)
+            name[0] += 32;
+        return new String(name);
     }
 
     @Override
@@ -118,13 +127,8 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
         Map<String, Object> apiInfo = (Map<String, Object>) objs.get("apiInfo");
         List<Map<String, Object>> apis = (List<Map<String, Object>>) apiInfo.get("apis");
         for (Map<String, Object> api : apis) {
-            String classname = (String) api.get("classname");
-            byte[] name = classname.getBytes(StandardCharsets.UTF_8);
-            if (name[0] > 64 && name[0] < 91)
-                name[0] += 32;
-            api.put("lowerClassname", new String(name));
+            api.put("lowerClassname", firstLetterLower((String) api.get("classname")));
         }
-
         return super.postProcessSupportingFileData(objs);
     }
 
@@ -153,6 +157,23 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
                 if (operation.getHasPathParams()) {
                     operation.path = camelizePath(operation.path);
                 }
+
+                for (CodegenParameter p : operation.allParams) {
+                    String k = "x-param-ResolveMethod";
+                    String paramName = p.getParamName();
+                    String dataType = p.getDataType();
+                    p.vendorExtensions.put("It sure is set", true);
+                    if (p.getIsQueryParam()) {
+                        p.vendorExtensions.put(k, "query(\"" + paramName + "\").to(" + dataType + ".class)");
+                    } else if (p.getIsPathParam()) {
+                        p.vendorExtensions.put(k, "path(\"" + paramName + "\").to(" + dataType + ".class)");
+                    } else if (p.getIsBodyParam()) {
+                        p.vendorExtensions.put(k, "body(" + dataType + ".class)");
+                    } else if (p.getIsCookieParam()) {
+                        p.vendorExtensions.put(k, "cookie(\"" + paramName + ".class\").to(" + dataType + ".class)");
+                    }
+                }
+                operation.getVendorExtensions().put("asdasd", "asdasd");
             }
         }
         operations.putAll(additionalProperties);
