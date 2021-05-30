@@ -24,6 +24,11 @@
       <version>4.12</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.jooby</groupId>
+      <artifactId>jooby-netty</artifactId>
+      <version>2.9.6</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -36,7 +41,7 @@
             <manifest>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-              <mainClass>org.simpleserver.SimpleServer</mainClass>
+              <mainClass>{{#apiInfo}}{{apiPackage}}{{/apiInfo}}.Endpoint</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>

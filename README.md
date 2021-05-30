@@ -1,3 +1,3 @@
-# CustomTemplate
+# OpenAPI codegen for Jooby framework
 
-Custom template for swagger generator
+This projekt adds support in codegen for the Jooby framework.
