@@ -17,7 +17,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -76,7 +75,7 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
     }
 
     public String getHelp() {
-        return "Generates a java-jooby Server library.";
+        return "Generates a java-jooby Server.";
     }
 
     @Override
@@ -172,7 +171,6 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
                         p.vendorExtensions.put(k, "cookie(\"" + paramName + ".class\").to(" + dataType + ".class)");
                     }
                 }
-                operation.getVendorExtensions().put("asdasd", "asdasd");
             }
         }
         operations.putAll(additionalProperties);

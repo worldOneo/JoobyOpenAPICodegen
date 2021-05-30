@@ -28,10 +28,13 @@ public class Endpoint extends Jooby {
             ctx.setDefaultResponseType(MediaType.json);
             return GSON.toJson(value).getBytes(StandardCharsets.ISO_8859_1);
         });
+
     {{#apis}}{{#operations}}
-        {{classname}} {{lowerClassname}} = new {{classname}}(); {{#operation}}
-        {{httpMethod}}("{{path}}", {{lowerClassname}}::{{operationId}});{{/operation}}
-    {{/operations}}{{/apis}}
+        {{classname}} {{lowerClassname}} = new {{classname}}();{{/operations}}{{/apis}}
+
+        path("{{{basePathWithoutHost}}}", () -> { {{#apis}}{{#operations}}{{#operation}}
+            {{httpMethod}}("{{path}}", {{lowerClassname}}::{{operationId}});{{/operation}}{{/operations}}{{/apis}}
+        });
     }
 }
 {{/apiInfo}}
