@@ -162,7 +162,6 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
                     String k = "x-param-ResolveMethod";
                     String paramName = p.getParamName();
                     String dataType = p.getDataType();
-                    p.vendorExtensions.put("It sure is set", true);
                     if (p.getIsQueryParam()) {
                         p.vendorExtensions.put(k, "query(\"" + paramName + "\").to(" + dataType + ".class)");
                     } else if (p.getIsPathParam()) {
