@@ -2,17 +2,16 @@ package org.simpleserver.controllers;
 
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import io.jooby.*;
 
 public class {{classname}}Test {
-    private Object testRepository = null;
-
-    {{classname}} endpoint = new {{classname}}(testRepository);
+    private MockRouter router = new MockRouter(new Endpoint());
 {{#operations}}{{#operation}}
     @Test
-    public void testHandle{{httpMethod}}() {
-        String response = (String)this.endpoint.{{operationId}}(null);
-        int responseCode = this.endpoint.getResponseCode();
-        assertEquals(500, responseCode);
-        assertEquals("Endpoint not implemented", response);
-    } {{/operation}}{{/operations}}
+    public void testHandle{{operationId}}() {
+        router.{{httpMethod}}("{{path}}", response -> {
+            assertEquals(StatusCode.NOT_IMPLEMENTED, response.getStatusCode());
+        };
+    }
+    {{/operation}}{{/operations}}
 }

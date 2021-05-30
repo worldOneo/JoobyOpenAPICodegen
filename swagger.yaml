@@ -13,6 +13,7 @@ paths:
       operationId: listPets
       tags:
         - pets
+        - OtherTag
       parameters:
         - name: limit
           in: query
@@ -79,6 +80,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /store/has:
+    get:
+      tags:
+        - pets
 components:
   schemas:
     Pet:

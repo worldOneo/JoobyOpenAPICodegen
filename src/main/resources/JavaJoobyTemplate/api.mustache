@@ -1,40 +1,23 @@
-package org.simpleserver.controllers;
+package {{package}};
 
 {{#imports}}
 import {{import}};
 {{/imports}}
 
 import io.jooby.*;
-import java.util.function.*;
-import com.google.gson.Gson;
+import org.jetbrains.annotations.NotNull;
+
 
 {{#operations}}
-public class {{classname}} extends Jooby {
-    private static final Gson GSON = new Gson();
-    public {{classname}}() {
-        setServerOptions(new ServerOptions().setPort({{serverPort}}));
-    {{#operation}}
-        {{httpMethod}}("{{path}}", json(this::{{operationId}}));
-    {{/operation}}
-    }
+public class {{classname}} {
 
     {{#operation}}
-    @Override
+    @NotNull
     public {{returnType}} {{operationId}}(Context ctx) {
         ctx.setResponseCode(StatusCode.NOT_IMPLEMENTED);
         return new {{defaultResponse}}();
     }
 
     {{/operation}}
-
-
-    public <T> Function<Context, String> json(Function<Context, T> executor) {
-        return ctx -> {
-            T val = executor.apply(ctx);
-            if (val == null)
-                return "";
-            return GSON.toJson(val);
-        };
-    }
 }
 {{/operations}}

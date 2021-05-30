@@ -6,12 +6,16 @@ import io.swagger.codegen.v3.CodegenProperty;
 import io.swagger.codegen.v3.CodegenType;
 import io.swagger.codegen.v3.SupportingFile;
 import io.swagger.codegen.v3.generators.java.AbstractJavaCodegen;
+import io.swagger.codegen.v3.templates.MustacheTemplateEngine;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.servers.Server;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -20,7 +24,8 @@ import java.util.regex.Pattern;
 public class JoobyServerCodegen extends AbstractJavaCodegen {
     public static final String ROOT_PACKAGE = "rootPackage";
     protected String resourceFolder = "src/main/resources";
-    protected String rootPackage = "org.simpleserver";
+    protected String sourceFolder = "src/main/java";
+    protected String rootPackage = System.getenv().getOrDefault("JOOBY_SERVER_PACKAGE", "org.simpleserver");
     protected String apiVersion = "1.0.0-SNAPSHOT";
 
     public JoobyServerCodegen() {
@@ -31,9 +36,6 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
 
         modelTemplateFiles.clear();
         modelTemplateFiles.put("model.mustache", ".java");
-
-        apiTemplateFiles.clear();
-        apiTemplateFiles.put("api.mustache", ".java");
 
         embeddedTemplateDir = templateDir = "JavaJoobyTemplate";
 
@@ -51,6 +53,11 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
 
     }
 
+    @Override
+    protected void setTemplateEngine() {
+        this.templateEngine = new MustacheTemplateEngine(this);
+    }
+
     public CodegenType getTag() {
         return CodegenType.SERVER;
     }
@@ -65,6 +72,7 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
 
     @Override
     public void preprocessOpenAPI(OpenAPI openAPI) {
+        openAPI.getInfo().getTitle();
         super.preprocessOpenAPI(openAPI);
         try {
             URL value = new URL(openAPI.getServers().stream()
@@ -89,6 +97,8 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
     public void processOpts() {
         super.processOpts();
 
+        String apiFolder = sourceFolder + '/' + apiPackage.replace('.', '/');
+        writeOptional(outputFolder, new SupportingFile("endpoint.mustache", apiFolder, "Endpoint.java"));
         writeOptional(outputFolder, new SupportingFile(".gitignore", "", ".gitignore"));
         writeOptional(outputFolder, new SupportingFile("README.mustache", "", "README.md"));
         writeOptional(outputFolder, new SupportingFile("pom.mustache", "", "pom.xml"));
@@ -104,9 +114,18 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
     }
 
     @Override
-    public Map<String, Object> postProcessModels(Map<String, Object> objs) {
-        return super.postProcessModels(objs);
+    public Map<String, Object> postProcessSupportingFileData(Map<String, Object> objs) {
+        Map<String, Object> apiInfo = (Map<String, Object>) objs.get("apiInfo");
+        List<Map<String, Object>> apis = (List<Map<String, Object>>) apiInfo.get("apis");
+        for (Map<String, Object> api : apis) {
+            String classname = (String) api.get("classname");
+            byte[] name = classname.getBytes(StandardCharsets.UTF_8);
+            if (name[0] > 64 && name[0] < 91)
+                name[0] += 32;
+            api.put("lowerClassname", new String(name));
+        }
 
+        return super.postProcessSupportingFileData(objs);
     }
 
     @Override
@@ -140,6 +159,33 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
         return newObjs;
     }
 
+    @Override
+    public void addOperationToGroup(String tag, String resourcePath, Operation operation, CodegenOperation co, Map<String, List<CodegenOperation>> operations) {
+        String basePath = resourcePath;
+        if (basePath.startsWith("/")) {
+            basePath = basePath.substring(1);
+        }
+        int pos = basePath.indexOf("/");
+        if (pos > 0) {
+            basePath = basePath.substring(0, pos);
+        }
+
+        if (basePath.equals("")) {
+            basePath = "default";
+        }
+        List<CodegenOperation> opList = operations.computeIfAbsent(basePath, k -> new ArrayList<>());
+        if (opList.stream()
+                .noneMatch(op -> co.getPath().equals(op.getPath())
+                        && co.getHttpMethod().equals(op.getHttpMethod()))) {
+            opList.add(co);
+        }
+    }
+
+    @Override
+    public String getDefaultTemplateDir() {
+        return "JavaJoobyTemplate";
+    }
+
     private String camelizePath(String path) {
         String word = path;
         Pattern pattern = Pattern.compile("(_)(.)");
@@ -149,5 +195,14 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
             matcher = pattern.matcher(word);
         }
         return word;
+    }
+
+    @Override
+    public String toApiName(String name) {
+        if (name.length() == 0) {
+            return "DefaultController";
+        }
+        name = name.replaceAll("[^a-zA-Z0-9]+", "_");
+        return camelize(name) + "Controller";
     }
 }

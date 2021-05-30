@@ -1,0 +1,37 @@
+{{#apiInfo}}
+package {{apiPackage}};
+
+{{#imports}}
+import {{import}};
+{{/imports}}
+
+import io.jooby.*;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
+import com.google.gson.Gson;
+
+public class Endpoint extends Jooby {
+    private static final Gson GSON = new Gson();
+
+    public Endpoint() {
+        setServerOptions(new ServerOptions().setPort({{serverPort}}));
+
+        decoder(MediaType.json, (ctx, type) -> {
+            InputStream body = ctx.body().stream();
+            return GSON.fromJson(new InputStreamReader(body), type);
+        });
+
+        encoder(MediaType.json, (ctx, value) -> {
+            ctx.setDefaultResponseType(MediaType.json);
+            return GSON.toJson(value).getBytes(StandardCharsets.ISO_8859_1);
+        });
+    {{#apis}}{{#operations}}
+        {{classname}} {{lowerClassname}} = new {{classname}}(); {{#operation}}
+        {{httpMethod}}("{{path}}", {{lowerClassname}}::{{operationId}});{{/operation}}
+    {{/operations}}{{/apis}}
+    }
+}
+{{/apiInfo}}

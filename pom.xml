@@ -23,7 +23,7 @@
         <dependency>
             <groupId>io.swagger.codegen.v3</groupId>
             <artifactId>swagger-codegen-cli</artifactId>
-            <version>3.0.0</version>
+            <version>3.0.20</version>
         </dependency>
 
     </dependencies>
