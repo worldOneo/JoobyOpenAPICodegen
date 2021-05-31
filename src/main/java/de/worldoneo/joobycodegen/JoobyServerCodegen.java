@@ -159,16 +159,34 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
 
                 for (CodegenParameter p : operation.allParams) {
                     String k = "x-param-ResolveMethod";
-                    String paramName = p.getParamName();
+                    String baseName = p.baseName;
+                    p.vendorExtensions.put("x-param-Name", p.paramName);
                     String dataType = p.getDataType();
+                    boolean required = p.required;
+
+                    String toParse = required
+                            ? ".to(" + dataType + ".class)"
+                            : ".toOptional(" + dataType + ".class)";
+
+                    toParse = p.getIsString() && required ? ".value()" : toParse;
+                    toParse = p.getIsInteger() && required ? ".intValue()" : toParse;
+                    toParse = p.getIsLong() && required ? ".longValue()" : toParse;
+                    toParse = p.getIsBoolean() && required ? ".booleanValue()" : toParse;
+                    toParse = p.getIsFloat() && required ? ".floatValue()" : toParse;
+                    toParse = p.getIsDouble() && required ? ".doubleValue()" : toParse;
+
                     if (p.getIsQueryParam()) {
-                        p.vendorExtensions.put(k, "query(\"" + paramName + "\").to(" + dataType + ".class)");
+                        p.vendorExtensions.put(k, "query(\"" + baseName + "\")" + toParse);
                     } else if (p.getIsPathParam()) {
-                        p.vendorExtensions.put(k, "path(\"" + paramName + "\").to(" + dataType + ".class)");
+                        p.vendorExtensions.put(k, "path(\"" + baseName + "\")" + toParse);
                     } else if (p.getIsBodyParam()) {
-                        p.vendorExtensions.put(k, "body(" + dataType + ".class)");
+                        p.vendorExtensions.put(k, "body()" + toParse);
                     } else if (p.getIsCookieParam()) {
-                        p.vendorExtensions.put(k, "cookie(\"" + paramName + ".class\").to(" + dataType + ".class)");
+                        p.vendorExtensions.put(k, "cookie(\"" + baseName + "\")" + toParse);
+                    } else if (p.getIsFormParam()) {
+                        p.vendorExtensions.put(k, "form(\"" + baseName + "\")" + toParse);
+                    } else if (p.getIsHeaderParam()) {
+                        p.vendorExtensions.put(k, "header(\"" + baseName + "\")" + toParse);
                     }
                 }
             }

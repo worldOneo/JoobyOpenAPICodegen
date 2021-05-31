@@ -6,18 +6,19 @@ import {{import}};
 
 import io.jooby.*;
 import org.jetbrains.annotations.NotNull;
+import java.util.Optional;
 
 {{#operations}}
 public class {{classname}} { {{#operation}}
     /**{{#summary}}
-    * {{.}}{{/summary}}
+    * {{{.}}}{{/summary}}
     * {{#allParams}}
     * Param {{baseName}} ({{dataType}}){{#description}}:  {{{.}}}{{/description}}{{/allParams}}
     **/
     @NotNull
     public {{returnType}} {{operationId}}(Context ctx) {
     {{#allParams}}
-        {{dataType}} {{baseName}} = ctx.{{{vendorExtensions.x-param-ResolveMethod}}};
+        {{^required}}Optional<{{/required}}{{dataType}}{{^required}}>{{/required}} {{{vendorExtensions.x-param-Name}}} = ctx.{{{vendorExtensions.x-param-ResolveMethod}}};
     {{/allParams}}
         ctx.setResponseCode(StatusCode.NOT_IMPLEMENTED);
         return new {{defaultResponse}}();
