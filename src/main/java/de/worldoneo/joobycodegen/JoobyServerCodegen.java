@@ -17,6 +17,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -24,6 +25,7 @@ import java.util.regex.Pattern;
 
 public class JoobyServerCodegen extends AbstractJavaCodegen {
     public static final String ROOT_PACKAGE = "rootPackage";
+    private final Map<String, Object> modelEnums = new HashMap<>();
     protected String resourceFolder = "src/main/resources";
     protected String sourceFolder = "src/main/java";
     protected String rootPackage = System.getenv().getOrDefault("JOOBY_SERVER_PACKAGE", "org.simpleserver");
@@ -80,8 +82,17 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
 
     @Override
     public void preprocessOpenAPI(OpenAPI openAPI) {
-        openAPI.getInfo().getTitle();
         super.preprocessOpenAPI(openAPI);
+        openAPI.getComponents().getSchemas().forEach((s, schema) -> {
+            List anEnum = schema.getEnum();
+            if(anEnum != null) {
+                Object value = anEnum.get(0);
+                if (value instanceof String)
+                    value = "\"" + value + "\"";
+
+                modelEnums.put(s, value);
+            }
+        });
         try {
             URL value = new URL(openAPI.getServers().stream()
                     .map(Server::getUrl)
@@ -116,7 +127,7 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
     public void postProcessModelProperty(CodegenModel model, CodegenProperty property) {
         super.postProcessModelProperty(model, property);
         if (!model.getIsEnum()) {
-            model.imports.add("SerializedName");
+            model.imports.add("JsonProperty");
         }
         model.imports.remove("Schema");
     }
@@ -157,7 +168,10 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
                     operation.path = camelizePath(operation.path);
                 }
 
+                operation.vendorExtensions.put("x-is-venum", modelEnums.containsKey(operation.returnType));
+                operation.vendorExtensions.put("x-return-enumDefault", modelEnums.get(operation.returnType));
                 for (CodegenParameter p : operation.allParams) {
+
                     String k = "x-param-ResolveMethod";
                     String baseName = p.baseName;
                     p.vendorExtensions.put("x-param-Name", p.paramName);
@@ -168,12 +182,14 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
                             ? ".to(" + dataType + ".class)"
                             : ".toOptional(" + dataType + ".class)";
 
-                    toParse = p.getIsString() && required ? ".value()" : toParse;
-                    toParse = p.getIsInteger() && required ? ".intValue()" : toParse;
-                    toParse = p.getIsLong() && required ? ".longValue()" : toParse;
-                    toParse = p.getIsBoolean() && required ? ".booleanValue()" : toParse;
-                    toParse = p.getIsFloat() && required ? ".floatValue()" : toParse;
-                    toParse = p.getIsDouble() && required ? ".doubleValue()" : toParse;
+                    if (required) {
+                        toParse = p.getIsString() ? ".value()" : toParse;
+                        toParse = p.getIsInteger() ? ".intValue()" : toParse;
+                        toParse = p.getIsLong() ? ".longValue()" : toParse;
+                        toParse = p.getIsBoolean() ? ".booleanValue()" : toParse;
+                        toParse = p.getIsFloat() ? ".floatValue()" : toParse;
+                        toParse = p.getIsDouble() ? ".doubleValue()" : toParse;
+                    }
 
                     if (p.getIsQueryParam()) {
                         p.vendorExtensions.put(k, "query(\"" + baseName + "\")" + toParse);

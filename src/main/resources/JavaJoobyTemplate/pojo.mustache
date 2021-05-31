@@ -12,7 +12,7 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} {{#seriali
             {{/isContainer}}
         {{/items}}
     {{/items.isEnum}}
-    @SerializedName("{{baseName}}")
+    @JsonProperty("{{baseName}}")
     {{#isContainer}}
     private {{{datatypeWithEnum}}} {{name}}{{#required}} = {{{defaultValue}}}{{/required}}{{^required}} = null{{/required}};
     {{/isContainer}}

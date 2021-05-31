@@ -9,7 +9,7 @@ public class {{classname}}Test {
 {{#operations}}{{#operation}}
     @Test
     public void testHandle{{operationId}}() {
-        router.{{httpMethod}}("{{path}}", response -> {
+        router.{{httpMethod}}("{{{basePathWithoutHost}}}{{{path}}}", response -> {
             assertEquals(StatusCode.NOT_IMPLEMENTED, response.getStatusCode());
         });
     }
