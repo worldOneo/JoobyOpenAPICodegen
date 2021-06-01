@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,8 +85,8 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
     public void preprocessOpenAPI(OpenAPI openAPI) {
         super.preprocessOpenAPI(openAPI);
         openAPI.getComponents().getSchemas().forEach((s, schema) -> {
-            List anEnum = schema.getEnum();
-            if(anEnum != null) {
+            List<?> anEnum = schema.getEnum();
+            if (anEnum != null) {
                 Object value = anEnum.get(0);
                 if (value instanceof String)
                     value = "\"" + value + "\"";
@@ -170,39 +171,62 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
 
                 operation.vendorExtensions.put("x-is-venum", modelEnums.containsKey(operation.returnType));
                 operation.vendorExtensions.put("x-return-enumDefault", modelEnums.get(operation.returnType));
+                CodegenParameter bodyParam = operation.bodyParam;
+                if(bodyParam != null) {
+                    operation.vendorExtensions.put("x-req-renum", modelEnums.containsKey(bodyParam.baseType));
+                    operation.vendorExtensions.put("x-req-renumDefault", modelEnums.get(bodyParam.baseType));
+                    System.out.println("A " + bodyParam.baseType + " B " + bodyParam.dataType + " C " + bodyParam.defaultValue + " D " + bodyParam);
+                    operation.vendorExtensions.put("x-req-bodyType", bodyParam.baseType);
+                }
+
+                operation.vendorExtensions.put("x-is-get", operation.getHttpMethod().equalsIgnoreCase("get"));
+
                 for (CodegenParameter p : operation.allParams) {
 
-                    String k = "x-param-ResolveMethod";
+                    String resolveKey = "x-ResolveMethod";
+                    String setterKey = "x-MockingMethod";
+                    String parseFunction = "x-ParseMethod";
                     String baseName = p.baseName;
                     p.vendorExtensions.put("x-param-Name", p.paramName);
                     String dataType = p.getDataType();
                     boolean required = p.required;
 
                     String toParse = required
-                            ? ".to(" + dataType + ".class)"
-                            : ".toOptional(" + dataType + ".class)";
+                            ? "to(" + dataType + ".class)"
+                            : "toOptional(" + dataType + ".class)";
 
+                    Boolean isString = p.getIsString();
                     if (required) {
-                        toParse = p.getIsString() ? ".value()" : toParse;
-                        toParse = p.getIsInteger() ? ".intValue()" : toParse;
-                        toParse = p.getIsLong() ? ".longValue()" : toParse;
-                        toParse = p.getIsBoolean() ? ".booleanValue()" : toParse;
-                        toParse = p.getIsFloat() ? ".floatValue()" : toParse;
-                        toParse = p.getIsDouble() ? ".doubleValue()" : toParse;
+                        toParse = isString ? "value()" : toParse;
+                        toParse = p.getIsInteger() ? "intValue()" : toParse;
+                        toParse = p.getIsLong() ? "longValue()" : toParse;
+                        toParse = p.getIsBoolean() ? "booleanValue()" : toParse;
+                        toParse = p.getIsFloat() ? "floatValue()" : toParse;
+                        toParse = p.getIsDouble() ? "doubleValue()" : toParse;
                     }
 
+                    String testData = isString ? "\"test-data\"" : "\"0\"";
+                    String put = ".put(\"" + baseName + "\", " + testData + ")";
+                    p.vendorExtensions.put(parseFunction, toParse);
+
+                    Consumer<String> inServer = s -> p.vendorExtensions.put(resolveKey, s);
+                    Consumer<String> inTest = s -> p.vendorExtensions.put(setterKey, s);
                     if (p.getIsQueryParam()) {
-                        p.vendorExtensions.put(k, "query(\"" + baseName + "\")" + toParse);
+                        inServer.accept("query(\"" + baseName + "\")");
+                        inTest.accept("queryMap()" + put);
                     } else if (p.getIsPathParam()) {
-                        p.vendorExtensions.put(k, "path(\"" + baseName + "\")" + toParse);
+                        inServer.accept("path(\"" + baseName + "\")");
                     } else if (p.getIsBodyParam()) {
-                        p.vendorExtensions.put(k, "body()" + toParse);
+                        inServer.accept("body()");
                     } else if (p.getIsCookieParam()) {
-                        p.vendorExtensions.put(k, "cookie(\"" + baseName + "\")" + toParse);
+                        inServer.accept("cookie(\"" + baseName + "\")");
+                        inTest.accept("cookieMap()" + put);
                     } else if (p.getIsFormParam()) {
-                        p.vendorExtensions.put(k, "form(\"" + baseName + "\")" + toParse);
+                        inServer.accept("form(\"" + baseName + "\")");
+                        inTest.accept("formData()" + put);
                     } else if (p.getIsHeaderParam()) {
-                        p.vendorExtensions.put(k, "header(\"" + baseName + "\")" + toParse);
+                        inServer.accept("header(\"" + baseName + "\")");
+                        inTest.accept("setRequestHeader(\"" + baseName + "\", " + testData + ")");
                     }
                 }
             }

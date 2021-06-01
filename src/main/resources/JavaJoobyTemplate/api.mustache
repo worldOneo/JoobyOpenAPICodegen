@@ -18,10 +18,10 @@ public class {{classname}} { {{#operation}}
     @NotNull
     public {{returnType}} {{operationId}}(Context ctx) {
     {{#allParams}}
-        {{^required}}Optional<{{/required}}{{dataType}}{{^required}}>{{/required}} {{{vendorExtensions.x-param-Name}}} = ctx.{{{vendorExtensions.x-param-ResolveMethod}}};
+        {{^required}}Optional<{{/required}}{{dataType}}{{^required}}>{{/required}} {{{vendorExtensions.x-param-Name}}} = ctx.{{{vendorExtensions.x-ResolveMethod}}}.{{{vendorExtensions.x-ParseMethod}}};
     {{/allParams}}
         ctx.setResponseCode(StatusCode.NOT_IMPLEMENTED);
-        return {{#vendorExtensions}}{{^x-is-venum}}new {{defaultResponse}}(){{/x-is-venum}}{{#x-is-venum}}{{defaultResponse}}.fromValue({{{x-return-enumDefault}}}){{/x-is-venum}}{{/vendorExtensions}};
+        return {{>defaultResponseValue}};
     }
 
     {{/operation}}

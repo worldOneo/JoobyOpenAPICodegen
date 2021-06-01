@@ -1,15 +1,24 @@
 package {{package}};
 
+{{#imports}}
+import {{import}};
+{{/imports}}
+
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import io.jooby.*;
 
 public class {{classname}}Test {
-    private MockRouter router = new MockRouter(new Endpoint());
+    private final MockRouter router = new MockRouter(new Endpoint());
 {{#operations}}{{#operation}}
     @Test
     public void testHandle{{operationId}}() {
-        router.{{httpMethod}}("{{{basePathWithoutHost}}}{{{path}}}", response -> {
+        MockContext context = new MockContext();{{#allParams}}{{#vendorExtensions.x-MockingMethod}}
+        context.{{{.}}};{{/vendorExtensions.x-MockingMethod}}{{/allParams}}{{^vendorExtensions.x-is-get}}
+        context.setBody("{}");
+        context.setBodyObject({{>defaultRequestValue}});{{/vendorExtensions.x-is-get}}
+
+        router.{{httpMethod}}("{{{basePathWithoutHost}}}{{{path}}}", context, response -> {
             assertEquals(StatusCode.NOT_IMPLEMENTED, response.getStatusCode());
         });
     }
