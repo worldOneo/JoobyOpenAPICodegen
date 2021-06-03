@@ -10,6 +10,7 @@
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <application.class>{{#apiInfo}}{{apiPackage}}{{/apiInfo}}.Endpoint</application.class>
   </properties>
 
   <dependencies>
@@ -85,6 +86,11 @@
           <tagNameFormat>@{project.version}</tagNameFormat>
           <remoteTagging>false</remoteTagging>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>io.jooby</groupId>
+        <artifactId>jooby-maven-plugin</artifactId>
+        <version>2.9.6</version>
       </plugin>
     </plugins>
   </build>
