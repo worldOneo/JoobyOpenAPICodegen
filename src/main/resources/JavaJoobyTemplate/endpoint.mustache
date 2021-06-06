@@ -13,7 +13,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 public class Endpoint extends Jooby {
 
     public Endpoint() {
-        setServerOptions(new ServerOptions().setPort({{serverPort}}));
+        setServerOptions(new ServerOptions()
+                .setHttp2(true)
+                .setCompressionLevel(4)
+                .setPort({{serverPort}}));
+
         ObjectMapper objectMapper = JacksonModule.create()
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 

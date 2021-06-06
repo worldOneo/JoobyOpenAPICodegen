@@ -172,7 +172,7 @@ public class JoobyServerCodegen extends AbstractJavaCodegen {
                 operation.vendorExtensions.put("x-is-venum", modelEnums.containsKey(operation.returnType));
                 operation.vendorExtensions.put("x-return-enumDefault", modelEnums.get(operation.returnType));
                 CodegenParameter bodyParam = operation.bodyParam;
-                if(bodyParam != null) {
+                if (bodyParam != null) {
                     operation.vendorExtensions.put("x-req-renum", modelEnums.containsKey(bodyParam.baseType));
                     operation.vendorExtensions.put("x-req-renumDefault", modelEnums.get(bodyParam.baseType));
                     operation.vendorExtensions.put("x-req-bodyType", bodyParam.baseType);
